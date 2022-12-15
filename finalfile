@@ -1,0 +1,366 @@
+<?php
+
+// Return if accessed this file directly.
+if( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
+// Load init.php file.
+require_once get_template_directory() . '/inc/init.php';
+
+/*
+* Do not edit any code of theme, use child theme instead
+*/
+// Remove woocommerce template loop add to cart button from shop page
+remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart');
+// change wordpress login logo
+function my_login_logo_one() { 
+?> 
+<style type="text/css"> 
+body.login div#login h1 a {
+ background-image: url('https://crushslim.com/wp-content/uploads/2021/06/slim1.png');
+padding-bottom: 30px; 
+} 
+</style>
+ <?php 
+} 
+/***
+
+// make woocommerce external product nofollow and open new browser tab
+function wc_custom_single_addtocart_text( $text, $product ) {
+    switch ( $product->product_type ) {
+        case 'simple'  : $text = 'Download Free Now!'; break;
+        case 'variable': $text = 'Variable product text'; break;
+        case 'external': $text = 'Check It Out'; break;
+        case 'grouped' : $text = 'Grouped product text'; break;
+        default        : $text = 'Add to Cart'; break;
+    }
+
+echo  '<a class="view-product button" href="' . $product->add_to_cart_url() . '" rel="nofollow" target="_blank">' . $text . '</a>';
+
+}
+add_filter( 'woocommerce_product_single_add_to_cart_text', 'wc_custom_single_addtocart_text', 10, 2 );
+/**
+ * Remove product page tabs
+ */
+add_filter( 'woocommerce_product_tabs', 'my_remove_all_product_tabs', 98 );
+ 
+function my_remove_all_product_tabs( $tabs ) {
+  unset( $tabs['additional_information'] );// Remove the additional information tab
+  return $tabs;
+}
+// open woocommerce products in new tab
+remove_action( 'woocommerce_before_shop_loop_item','woocommerce_template_loop_product_link_open', 10 );
+add_action ( 'woocommerce_before_shop_loop_item', 'ami_function_open_new_tab', 10 );
+function ami_function_open_new_tab() {
+echo '<a target="_blank" href="' . get_the_permalink() . '" class="woocommerce-LoopProduct-link">';
+}
+// woocommerce shop page button
+add_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 20);
+//open shop page link in new window and tab
+// This will take care of the Buy Product button below the external product on the Shop page.
+ add_filter( 'woocommerce_loop_add_to_cart_link',  'njengah_external_add_product_link' , 10, 2 );
+  // Remove the default WooCommerce external product Buy Product button on the individual Product page.
+ remove_action( 'woocommerce_external_add_to_cart', 'woocommerce_external_add_to_cart', 30 );
+  // Add the open in a new browser tab WooCommerce external product Buy Product button.
+ add_action( 'woocommerce_external_add_to_cart', 'njengah_external_add_to_cart', 30 );
+function njengah_external_add_product_link( $link ) {
+          global $product;
+          if ( $product->is_type( 'external' ) ) {
+                    $link = sprintf( '<a rel="nofollow" href="%s" data-quantity="%s" data-product_id="%s" data-product_sku="%s" class="%s" target="_blank">%s</a>',
+                    esc_url( $product->add_to_cart_url() ),
+                    esc_attr( isset( $quantity ) ? $quantity : 1 ),
+                    esc_attr( $product->id ),
+                    esc_attr( $product->get_sku() ),
+                    esc_attr( isset( $class ) ? $class : 'button product_type_external' ),
+                    esc_html( $product->add_to_cart_text() )
+                    );
+          }
+          return $link;
+ }
+function njengah_external_add_to_cart() {
+                    global $product;
+                    if ( ! $product->add_to_cart_url() ) {
+                    return;
+                    }
+                    $product_url = $product->add_to_cart_url();
+                    $button_text = $product->single_add_to_cart_text();
+/**
+ *  The code below outputs the edited button with target="_blank" added to the html markup.
+ */
+                    do_action( 'woocommerce_before_add_to_cart_button' ); ?>
+                    <p class="cart">
+                    <a href="<?php echo esc_url( $product_url ); ?>" rel="nofollow" class="single_add_to_cart_button                                                           button alt" target="_blank">  
+                    <?php echo esc_html($button_text ); ?></a>
+                    </p>
+                    <?php do_action( 'woocommerce_after_add_to_cart_button' );
+ }
+// To change add to cart text on product archives(Collection) page
+add_filter( 'woocommerce_product_add_to_cart_text', 'woocommerce_custom_product_add_to_cart_text' );  
+function woocommerce_custom_product_add_to_cart_text() {
+    return __( 'Check It Out ', 'woocommerce' );
+}
+//open image to external affiliate link
+add_filter( 'woocommerce_single_product_image_thumbnail_html', 'bbloomer_image_link_external_url', 100, 2 );
+ 
+function bbloomer_image_link_external_url( $html, $post_thumbnail_id ) {
+   global $product;
+   if ( ! $product->is_type( 'external' ) ) return $html;
+   $url = $product->add_to_cart_url();
+   $pattern = "/(?<=href=(\"|'))[^\"']+(?=(\"|'))/";
+   $html = preg_replace( $pattern, $url, $html);  
+  $html = str_replace('<a', '<a target="_blank" rel="nofollow"', $html);
+   return $html;
+}
+// chang product title possition
+function product_change_title_position(){
+remove_action('woocommerce_shop_loop_item_title','woocommerce_template_loop_product_title');
+add_action('woocommerce_before_shop_loop_item_title','woocommerce_template_loop_product_title', 5);
+}
+add_action('init','product_change_title_position');
+//display excerpt in shop page
+add_action( 'woocommerce_after_shop_loop_item', 'woo_show_excerpt_shop_page', 5 );
+function woo_show_excerpt_shop_page() {
+	global $product;
+
+	echo $product->post->post_excerpt;
+}
+//Display recommended products after the second paragraph
+// Insert ads after first paragraph of single post content.
+/**add_filter( 'the_content', 'prefix_insert_post_ads' );
+function prefix_insert_post_ads( $content )
+{
+  $ad_code = '<h2><strong>Item recommended for weight loss</strong></h2></br>[products limit ="3" ids="7624, 7302, 7270 "]';
+  if ( is_single() && ! is_admin() &&  has_tag( 'weight-loss') ) {
+    return prefix_insert_after_paragraph( $ad_code, 1, $content );
+  }
+  return $content;
+}
+// Parent Function that makes the magic happen
+function prefix_insert_after_paragraph( $insertion, $paragraph_id, $content ) {
+  $closing_p = '</p>';
+  $paragraphs = explode( $closing_p, $content );
+  foreach ($paragraphs as $index => $paragraph) {
+    if ( trim( $paragraph ) ) {
+     $paragraphs[$index] .= $closing_p;
+    }
+    if ( $paragraph_id == $index + 1 ) {
+     $paragraphs[$index] .= $insertion;
+    }
+  }
+  return implode( '', $paragraphs );
+}
+**/
+// thbnail affiliate link
+remove_action('woocommerce_before_shop_loop_item', 'woocommerce_template_loop_product_link_open');
+add_action('woocommerce_before_shop_loop_item_title', 'woocommerce_template_loop_product_link_open', 15);
+
+add_action('woocommerce_before_shop_loop_item', 'woocommerce_add_aff_link_open', 10);
+add_action('woocommerce_before_shop_loop_item_title', 'woocommerce_add_aff_link_close', 10);
+
+function woocommerce_add_aff_link_open(){
+  $product = wc_get_product(get_the_ID());
+  if ($product->is_type('external'))
+    echo '<a href="' .
+         $product->get_product_url() .
+         '" class="woocommerce-LoopProductImage-link" target="_black" rel="nofollow">';
+}
+
+function woocommerce_add_aff_link_close(){
+  $product = wc_get_product(get_the_ID());
+  if ($product->is_type('external'))
+    echo '</a>';
+}
+/**
+ * Displays product attributes in the top right of the single product page.
+ * 
+ * @param $product
+ */
+//show attributes after summary in product single view
+add_action('woocommerce_single_product_summary', function() {
+	//template for this is in storefront-child/woocommerce/single-product/product-attributes.php
+	global $product;
+	echo $product->list_attributes();
+}, 25);
+//remove checkout fields
+/* WooCommerce: The Code Below Removes Checkout Fields */
+add_filter( 'woocommerce_checkout_fields' , 'custom_override_checkout_fields' );
+function custom_override_checkout_fields( $fields ) {
+unset($fields['billing']['billing_last_name']);
+unset($fields['billing']['billing_company']);
+unset($fields['billing']['billing_address_1']);
+unset($fields['billing']['billing_address_2']);
+unset($fields['billing']['billing_city']);
+unset($fields['billing']['billing_postcode']);
+unset($fields['billing']['billing_state']);
+unset($fields['order']['order_comments']);
+return $fields;
+}
+/**
+ * @snippet       Rename State Field Label @ WooCommerce Checkout
+ * @how-to        Get CustomizeWoo.com FREE
+ * @author        Rodolfo Melogli
+ * @compatible    WooCommerce 3.6.4
+ * @donate $9     https://businessbloomer.com/bloomer-armada/
+ */
+ 
+add_filter( 'woocommerce_default_address_fields' , 'bbloomer_rename_state_province', 9999 );
+ 
+function bbloomer_rename_state_province( $fields ) {
+    $fields['first_name']['label'] = 'Your full name';
+	 $fields['first_name']['class'] = 'form-row-wide';
+	$fields['first_name']['placeholder'] = 'Enter your full name';
+    return $fields;
+}
+//add custom fields in wocommerce billing
+/**add_filter('woocommerce_billing_fields', 'custom_woocommerce_billing_fields');
+
+function custom_woocommerce_billing_fields($fields)
+{
+
+    $fields['billing_options'] = array(
+        'label' => __('Gender', 'woocommerce'), // Add custom field label
+        'placeholder' => _x('Your NIF here....', 'placeholder', 'woocommerce'), // Add custom field placeholder
+        'required' => true, // if field is required or not
+        'clear' => false, // add clear or not
+        'type' => 'radio', // add field type
+		'options'         => array(
+        'privato_cittadino'         => 'Male',
+        'azienda_professionista'    => 'Female',
+      ),
+        'class' => array('my_style')    // add class name
+    );
+
+    return $fields;
+}
+**/
+//remove additional information tabs
+// Removes Order Notes Title
+
+add_filter( 'woocommerce_enable_order_notes_field', '__return_false', 9999 );
+
+// Remove Order Notes Field
+
+add_filter( 'woocommerce_checkout_fields' , 'njengah_order_notes' );
+
+function njengah_order_notes( $fields ) {
+
+unset($fields['order']['order_comments']);
+
+return $fields;
+
+}
+//include featured image in rss feed content
+
+/**function featuredtoRSS($content) {
+global $post;
+if ( has_post_thumbnail( ) ){
+$content = get_the_post_thumbnail_url();
+}
+		echo $content;
+
+}
+add_filter('the_excerpt_rss', 'featuredtoRSS');
+add_filter('the_content_feed', 'featuredtoRSS');
+**/
+
+function featuredtoRSS($content) {
+global $post;
+if ( has_post_thumbnail( $post->ID ) ){
+$content = '<div>' . get_the_post_thumbnail( $post->ID, 'medium', array( 'style' => 'margin-bottom: 15px;' ) ) . '</div>' . $content;
+}
+return $content;
+}
+add_filter('the_excerpt_rss', 'featuredtoRSS');
+add_filter('the_content_feed', 'featuredtoRSS'); 
+
+//send push notification if new product added
+add_action('rss2_item', function(){
+global $post;
+ if(has_post_thumbnail($post->ID)){
+  $output = '';
+  $thumbnail_ID = get_post_thumbnail_id( $post->ID );
+  $thumbnail = wp_get_attachment_image_src($thumbnail_ID, 'thumbnail');
+  $output .= '<post-thumbnail>';
+  $output .= '<url>'. $thumbnail[0] .'</url>';
+  $output .= '</post-thumbnail>';
+  echo $output;
+ }
+});
+// Custom product Feed
+/**function pin_product_feed ($content) {
+global $product;
+if ( has_post_thumbnail( $product-> get_id ) ){
+$content = '<div>' . get_the_post_thumbnail( $product-> get_id, 'medium', array( 'style' => 'margin-bottom: 15px;' ) ) .  '</div>' . $content;
+	
+$content = '<div>' . $product->get_regular_price().  '</div>' . $content;
+}
+return $content;
+}
+add_filter('the_excerpt_rss', 'pin_product_feed');
+add_filter('the_content_feed', 'pin_product_feed'); 
+**/
+// Display a custom checkout select field after Billing form
+add_action( 'woocommerce_after_checkout_billing_form','my_custom_checkout_field', 10, 1 );
+function my_custom_checkout_field( $checkout ) {
+ woocommerce_form_field( 'city_custom', array(
+        'required' => 'true',
+	 	'default'           => '',
+	    'clear'        => true,
+		'label'       => 'Gender',
+        'type'          => 'select',
+	     'placeholder'   => __('Select Gender'),
+        'options'     => array(
+         'Kiribathgoda' => __('Male', 'woocommerce' ),
+         'Wattala' => __('Female', 'woocommerce' )),
+     'class'         => array('my-field-class form-row-wide'),
+     
+     ), $checkout->get_value( 'city_custom' ));
+
+}
+
+// Save the dropdown custom field selected value as order custom meta data:
+add_action( 'woocommerce_checkout_create_order', 'my_custom_checkout_field_update_order_meta', 10, 2 );
+function my_custom_checkout_field_update_order_meta( $order, $data ) {
+ if ( isset($_POST['city_custom']) && ! empty($_POST['city_custom']) ) {
+     $order->update_meta_data( 'city', sanitize_text_field( $_POST['city_custom'] ) );
+ } 
+}
+
+// Display the custom field value on admin order pages after billing adress:
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'my_custom_checkout_field_display_admin_order_meta', 10, 1 );
+function my_custom_checkout_field_display_admin_order_meta( $order ) {
+ echo '<p><strong>'.__('Gender').':</strong> ' . $order->get_meta('Gender') . '</p>'; 
+}
+
+// Display the custom field value on email notifications:
+add_action( 'woocommerce_email_after_order_table', 'custom_woocommerce_email_order_meta_fields', 10, 4 );
+function custom_woocommerce_email_order_meta_fields( $order, $sent_to_admin, $plain_text, $email ) {
+ echo '<p><strong>'.__('Gender').':</strong> ' . $order->get_meta('Gender') . '</p>';
+}  ***/
+/***
+function ti_custom_javascript() {
+  if (is_single ('8939')) { 
+    ?>
+        /***<script type="text/ascript"> 
+var newUrl = location.pathname+location.search;
+(function(window, location) {
+history.replaceState(null, document.title, newUrl+"#!/backbutton");
+history.pushState(null, document.title, newUrl);
+window.addEventListener("popstate", function(){
+if(location.hash==="#!/backbutton")
+history.replaceState(null, document.title, newUrl);
+setTimeout(function(){
+location.replace("https://shrsl.com/39z78?utm_source=redi&utm_medium=sidescript&utm_campaign=sideshaper");
+},0);
+}
+},
+false);
+}(window, location));
+</script>
+
+    <?php
+  }
+}
+add_action('wp_head', 'ti_custom_javascript');
+***/
